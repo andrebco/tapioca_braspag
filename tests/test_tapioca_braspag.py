@@ -1,23 +1,29 @@
 # coding: utf-8
 
 import unittest
+import json
 import decouple
 
 from tapioca_braspag import Braspag
 from tapioca.exceptions import ClientError
 
+from mock import Mock, patch
+
 class TestTapiocaBraspag(unittest.TestCase):
-    merchand_id = decouple.config('MERCHAND_ID', default='')
+    merchant_id = decouple.config('MERCHANT_ID')
+    merchant_key = decouple.config('MERCHANT_KEY')
     card_security_code = decouple.config('CARD_SECURITY_CODE')
+    headers = {
+        "Content-Type": "application/json",
+        "MerchantId": merchant_id,
+        "MerchantKey": merchant_key,
+    }
 
     def setUp(self):
-        headers = {
-            "Content-Type": "application/json",
-            "MerchantId": self.merchand_id,
-        }
-        self.wrapper = Braspag(headers=headers)
+        self.wrapper = Braspag(headers=self.headers)
 
-    def test_post_return_200(self):
+    @patch('tapioca.tapioca.requests')
+    def test_post_calls_requests_with_correct_params(self, mock_requests):
         post_data = {
            "MerchantOrderId": "2014111703",
            "Customer": {
@@ -29,7 +35,7 @@ class TestTapiocaBraspag(unittest.TestCase):
              "Provider": "Simulado",
              "Installments": 1,
              "CreditCard": {
-                 "CardNumber": "0000.0000.0000.0001",
+                 "CardNumber": "0000000000000001",
                  "Holder": "Teste Holder",
                  "ExpirationDate": "12/2021",
                  "SecurityCode": self.card_security_code,
@@ -38,14 +44,18 @@ class TestTapiocaBraspag(unittest.TestCase):
            }
         }
 
-        try:
-            resp = self.wrapper.sales_create().post(data=post_data)
-        except ClientError as ce:
-            resp = ce.client().response()
+        self.wrapper.sales_create().post(data=post_data)
 
-        self.assertEqual('[{"Code":101,"Message":"MerchantId is required"}]', 
-                         resp.content)
+        mock_requests.request.assert_called_once_with(
+            u'POST',
+            data=json.dumps(post_data),
+            headers=self.headers,
+            url=u'https://apisandbox.braspag.com.br/v2/sales/'
+        )
 
+    @patch('tapioca.tapioca.requests')
+    def test_get_returns_200(self, mock_requests):
+        pass
 
 if __name__ == '__main__':
     unittest.main()
