@@ -46,3 +46,4 @@ docs/_build
 
 include/
 pip-selfcheck.json
+settings.ini

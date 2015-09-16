@@ -31,10 +31,6 @@ class BraspagClientAdapter(JSONAdapterMixin, TapiocaAdapter):
         if url:
             return {'url': url}
 
-    def process_response(self, response):
-        data = self.response_to_native(response)
-        return data
-
 
 class TapiocaBraspagInstantiator(object):
 

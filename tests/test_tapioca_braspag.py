@@ -1,16 +1,19 @@
 # coding: utf-8
 
 import unittest
-
-from tapioca_braspag import Braspag
 import decouple
 
+from tapioca_braspag import Braspag
+from tapioca.exceptions import ClientError
+
 class TestTapiocaBraspag(unittest.TestCase):
+    merchand_id = decouple.config('MERCHAND_ID', default='')
+    card_security_code = decouple.config('CARD_SECURITY_CODE')
 
     def setUp(self):
         headers = {
             "Content-Type": "application/json",
-            "MerchantId": ""
+            "MerchantId": self.merchand_id,
         }
         self.wrapper = Braspag(headers=headers)
 
@@ -29,21 +32,19 @@ class TestTapiocaBraspag(unittest.TestCase):
                  "CardNumber": "0000.0000.0000.0001",
                  "Holder": "Teste Holder",
                  "ExpirationDate": "12/2021",
-                 "SecurityCode": "XXX",
+                 "SecurityCode": self.card_security_code,
                  "Brand": "Visa"
              }
            }
         }
 
-        exp_resp = [
-                {
-                    "Code": 101,
-                    "Message": "MerchantId is required"
-                }
-            ]
+        try:
+            resp = self.wrapper.sales_create().post(data=post_data)
+        except ClientError as ce:
+            resp = ce.client().response()
 
-        resp = self.wrapper.sales_create().post(data=post_data)
-        self.assertEqual(exp_resp, resp().data())
+        self.assertEqual('[{"Code":101,"Message":"MerchantId is required"}]', 
+                         resp.content)
 
 
 if __name__ == '__main__':
