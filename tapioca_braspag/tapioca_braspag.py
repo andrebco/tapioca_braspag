@@ -1,9 +1,10 @@
 # coding: utf-8
 
 from tapioca import (
-    TapiocaAdapter, generate_wrapper_from_adapter, JSONAdapterMixin)
+    TapiocaAdapter, JSONAdapterMixin)
 
-from tapioca.tapioca import TapiocaClient, TapiocaClientExecutor
+from tapioca.tapioca import TapiocaClient, TapiocaClientExecutor,\
+     TapiocaInstantiator
 
 from resource_mapping import RESOURCE_MAPPING
 
@@ -17,25 +18,16 @@ class BraspagClientAdapter(JSONAdapterMixin, TapiocaAdapter):
         params = super(BraspagClientAdapter, self).get_request_kwargs(
             api_params, *args, **kwargs)
 
+        if 'headers' in api_params:
+            params['headers'] = api_params['headers']
+
         return params
 
     def get_iterator_list(self, response_data):
         return response_data
 
-    def get_iterator_next_request_kwargs(self,
-            iterator_request_kwargs, response_data, response):
-        if not paging:
-            return
-        url = paging.get('next')
 
-        if url:
-            return {'url': url}
-
-
-class TapiocaBraspagInstantiator(object):
-
-    def __init__(self, adapter_class):
-        self.adapter_class = adapter_class
+class TapiocaBraspagInstantiator(TapiocaInstantiator):
 
     def __call__(self, *args, **kwargs):
         return TapiocaBraspagClient(self.adapter_class(), api_params=kwargs)
@@ -55,4 +47,9 @@ class TapiocaBraspagClientExecutor(TapiocaClientExecutor):
         return self._make_request('GET', *args, **kwargs)
 
 
-Braspag = TapiocaBraspagInstantiator(BraspagClientAdapter)
+        return TapiocaClient(self.adapter_class(), api_params=kwargs)
+
+def generate_wrapper_from_adapter(adapter_class):
+    return TapiocaBraspagInstantiator(adapter_class)
+
+Braspag = generate_wrapper_from_adapter(BraspagClientAdapter)
