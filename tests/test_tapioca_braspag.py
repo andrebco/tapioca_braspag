@@ -4,10 +4,12 @@ import unittest
 import json
 import decouple
 
-from tapioca_braspag import Braspag
+from tapioca_braspag import Braspag, BraspagConsult
+
 from tapioca.exceptions import ClientError, ServerError
 
 from mock import Mock, patch
+
 
 class TestTapiocaBraspag(unittest.TestCase):
     merchant_id = decouple.config('MERCHANT_ID')
@@ -21,6 +23,7 @@ class TestTapiocaBraspag(unittest.TestCase):
 
     def setUp(self):
         self.wrapper = Braspag(headers=self.headers)
+        self.wrapper_consult = BraspagConsult(headers=self.headers)
 
     @patch('tapioca.tapioca.requests')
     def test_post_calls_requests_with_params(self, mock_requests):
@@ -50,7 +53,7 @@ class TestTapiocaBraspag(unittest.TestCase):
             u'POST',
             data=json.dumps(post_data),
             headers=self.headers,
-            url=u'https://apisandbox.braspag.com.br/v2/sales/'
+            url=u'https://apihomolog.braspag.com.br/v2/sales/'
         )
 
     @patch('tapioca.tapioca.requests')
@@ -58,14 +61,14 @@ class TestTapiocaBraspag(unittest.TestCase):
         get_data = {
            'id': 'a_payment_id',
         }
-        self.wrapper.sales_consult(**get_data).get()
+        self.wrapper_consult.sales_consult(**get_data).get()
         mock_requests.request.assert_called_once_with(
             u'GET',
             data=None,
             headers=self.headers,
-            url='https://apiquerysandbox.braspag.com.br/v2/sales/%s' % get_data['id']
+            url='https://apiqueryhomolog.braspag.com.br/v2/sales/{}'.format(
+                get_data['id'])
         )
-
 
     def test_post_to_api(self):
         if decouple.config('POST_TO_API', cast=bool, default=False):

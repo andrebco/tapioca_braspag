@@ -1,10 +1,7 @@
 # coding: utf-8
 
 from tapioca import (
-    TapiocaAdapter, JSONAdapterMixin)
-
-from tapioca.tapioca import TapiocaClient, TapiocaClientExecutor,\
-     TapiocaInstantiator
+    TapiocaAdapter, JSONAdapterMixin, generate_wrapper_from_adapter)
 
 from tapioca.exceptions import ResponseProcessException, ClientError,\
      ServerError
@@ -12,13 +9,11 @@ from tapioca.exceptions import ResponseProcessException, ClientError,\
 from resource_mapping import RESOURCE_MAPPING
 
 
-class BraspagClientAdapter(JSONAdapterMixin, TapiocaAdapter):
-    api_root = 'https://apisandbox.braspag.com.br/'
-    api_get_root = 'https://apiquerysandbox.braspag.com.br/'
+class BraspagBaseClientAdapter(JSONAdapterMixin, TapiocaAdapter):
     resource_mapping = RESOURCE_MAPPING
 
     def get_request_kwargs(self, api_params, *args, **kwargs):
-        params = super(BraspagClientAdapter, self).get_request_kwargs(
+        params = super(BraspagBaseClientAdapter, self).get_request_kwargs(
             api_params, *args, **kwargs)
 
         if 'headers' in api_params:
@@ -39,29 +34,16 @@ class BraspagClientAdapter(JSONAdapterMixin, TapiocaAdapter):
         if str(response.status_code).startswith('4'):
             raise ResponseProcessException(ClientError, data)
 
-
         return data
 
-
-class TapiocaBraspagInstantiator(TapiocaInstantiator):
-
-    def __call__(self, *args, **kwargs):
-        return TapiocaBraspagClient(self.adapter_class(), api_params=kwargs)
+class BraspagClientAdapter(BraspagBaseClientAdapter):
+    api_root = 'https://apihomolog.braspag.com.br/'
 
 
-class TapiocaBraspagClient(TapiocaClient):
-
-    def _wrap_in_tapioca_executor(self, data, *args, **kwargs):
-        return TapiocaBraspagClientExecutor(self._api.__class__(),
-            data=data, api_params=self._api_params, *args, **kwargs)
+class BraspagConsultClientAdapter(BraspagBaseClientAdapter):
+    api_root = 'https://apiqueryhomolog.braspag.com.br/'
 
 
-class TapiocaBraspagClientExecutor(TapiocaClientExecutor):
-
-    def get(self, *args, **kwargs):
-        return self._make_request('GET', *args, **kwargs)
-
-def generate_wrapper_from_adapter(adapter_class):
-    return TapiocaBraspagInstantiator(adapter_class)
-
+BraspagConsult = generate_wrapper_from_adapter(BraspagConsultClientAdapter)
 Braspag = generate_wrapper_from_adapter(BraspagClientAdapter)
+
