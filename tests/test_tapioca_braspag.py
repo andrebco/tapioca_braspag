@@ -1,7 +1,9 @@
 # coding: utf-8
 
 import unittest
+
 import json
+import uuid
 import decouple
 
 from tapioca_braspag import Braspag, BraspagConsult
@@ -9,6 +11,9 @@ from tapioca_braspag import Braspag, BraspagConsult
 from tapioca.exceptions import ClientError, ServerError
 
 from mock import Mock, patch
+
+def generate_response_id():
+    return uuid.uuid4()
 
 
 class TestTapiocaBraspag(unittest.TestCase):
@@ -19,6 +24,7 @@ class TestTapiocaBraspag(unittest.TestCase):
         "Content-Type": "application/json",
         "MerchantId": merchant_id,
         "MerchantKey": merchant_key,
+        "ResponseId": generate_response_id(),
     }
 
     def setUp(self):
@@ -74,6 +80,10 @@ class TestTapiocaBraspag(unittest.TestCase):
         if decouple.config('POST_TO_API', cast=bool, default=False):
             self.post_to_api()
 
+    def test_get_from_api(self):
+        if decouple.config('POST_TO_API', cast=bool, default=False):
+            self.get_from_api()
+
     def post_to_api(self):
         post_data = {
            "MerchantOrderId": "2014111703",
@@ -96,11 +106,27 @@ class TestTapiocaBraspag(unittest.TestCase):
         }
 
         try:
-            resp = self.wrapper.sales_create().post(data=post_data)
+            sales_create = self.wrapper.sales_create().post(data=post_data)
+            response = sales_create().response()
         except (ClientError, ServerError) as se:
-            resp = se
+            response = se.client().response()
 
-        self.assertEquals(200, resp.status)
+        self.assertEquals(201, response.status_code)
+        self.assertEquals('Created', response.reason)
+
+    def get_from_api(self):
+
+        try:
+            merchand_sales = self.wrapper_consult.merchant_consult_sales(
+                    id=self.merchant_id
+                ).get()
+            response = merchand_sales().response()
+        except (ClientError, ServerError) as se:
+            response = se.client().response()
+
+        self.assertEquals(200, response.status_code)
+        self.assertEquals('Successful', response.reason)
+
 
 
 if __name__ == '__main__':

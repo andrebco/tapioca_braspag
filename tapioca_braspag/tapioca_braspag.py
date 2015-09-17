@@ -30,11 +30,14 @@ class BraspagBaseClientAdapter(JSONAdapterMixin, TapiocaAdapter):
 
         if response.content:
             data = self.response_to_native(response)
+        else:
+            data = None
 
         if str(response.status_code).startswith('4'):
             raise ResponseProcessException(ClientError, data)
 
         return data
+
 
 class BraspagClientAdapter(BraspagBaseClientAdapter):
     api_root = 'https://apihomolog.braspag.com.br/'
