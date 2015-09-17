@@ -21,8 +21,6 @@ class BraspagClientAdapter(JSONAdapterMixin, TapiocaAdapter):
         params = super(BraspagClientAdapter, self).get_request_kwargs(
             api_params, *args, **kwargs)
 
-        import ipdb; ipdb.set_trace()
-
         if 'headers' in api_params:
             params['headers'] = api_params['headers']
 
@@ -35,10 +33,12 @@ class BraspagClientAdapter(JSONAdapterMixin, TapiocaAdapter):
         if str(response.status_code).startswith('5'):
             raise ResponseProcessException(ServerError, None)
 
-        if str(response.status_code).startswith('4'):
-            raise ResponseProcessException(ClientError, response)
+        if response.content:
+            data = self.response_to_native(response)
 
-        data = self.response_to_native(response)
+        if str(response.status_code).startswith('4'):
+            raise ResponseProcessException(ClientError, data)
+
 
         return data
 
@@ -59,8 +59,6 @@ class TapiocaBraspagClient(TapiocaClient):
 class TapiocaBraspagClientExecutor(TapiocaClientExecutor):
 
     def get(self, *args, **kwargs):
-        kwargs.update({'url': self._api.api_get_root,})
-        import ipdb; ipdb.set_trace()
         return self._make_request('GET', *args, **kwargs)
 
 def generate_wrapper_from_adapter(adapter_class):
