@@ -3,36 +3,42 @@
 import unittest
 
 import json
-import uuid
 import decouple
 
 from tapioca_braspag import Braspag, BraspagConsult
+
+from tapioca_braspag.tapioca_braspag import BraspagBaseClientAdapter
 
 from tapioca.exceptions import ClientError, ServerError
 
 from mock import Mock, patch
 
-def generate_response_id():
-    return uuid.uuid4()
-
 
 class TestTapiocaBraspag(unittest.TestCase):
-    merchant_id = decouple.config('MERCHANT_ID')
-    merchant_key = decouple.config('MERCHANT_KEY')
-    card_security_code = decouple.config('CARD_SECURITY_CODE')
+    merchant_id = decouple.config('MERCHANT_ID',
+                                  default='randoncode1')
+    merchant_key = decouple.config('MERCHANT_KEY', default='randoncode2')
+    card_security_code = decouple.config('CARD_SECURITY_CODE',
+                                         default='666')
     headers = {
         "Content-Type": "application/json",
         "MerchantId": merchant_id,
         "MerchantKey": merchant_key,
-        "ResponseId": generate_response_id(),
+        "ResponseId": 'a-randon-key' #mocked in tests
     }
 
     def setUp(self):
-        self.wrapper = Braspag(headers=self.headers)
-        self.wrapper_consult = BraspagConsult(headers=self.headers)
+        self.wrapper = Braspag(merchant_id=self.merchant_id,
+                               merchant_key=self.merchant_key)
+        self.wrapper_consult = BraspagConsult(merchant_id=self.merchant_id,
+                                              merchant_key=self.merchant_key)
 
+    @patch.object(BraspagBaseClientAdapter, 'generate_response_id')
     @patch('tapioca.tapioca.requests')
-    def test_post_calls_requests_with_params(self, mock_requests):
+    def test_post_calls_requests_with_params(self, mock_requests,
+                                            mock_response_id):
+
+        mock_response_id.return_value= 'a-randon-key'
         post_data = {
            "MerchantOrderId": "2014111703",
            "Customer": {
@@ -62,8 +68,12 @@ class TestTapiocaBraspag(unittest.TestCase):
             url=u'https://apihomolog.braspag.com.br/v2/sales/'
         )
 
+    @patch.object(BraspagBaseClientAdapter, 'generate_response_id')
     @patch('tapioca.tapioca.requests')
-    def test_get_calls_requests_with_params(self, mock_requests):
+    def test_get_calls_requests_with_params(self, mock_requests,
+                                            mock_response_id):
+
+        mock_response_id.return_value= 'a-randon-key'
         get_data = {
            'id': 'a_payment_id',
         }

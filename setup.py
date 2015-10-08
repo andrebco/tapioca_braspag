@@ -24,7 +24,8 @@ requirements = [
     
 ]
 test_requirements = [
-
+    'mock',
+    'python-decouple'
 ]
 
 def get_version(package):

@@ -1,7 +1,10 @@
 # coding: utf-8
+import uuid
 
 from tapioca import (
     TapiocaAdapter, JSONAdapterMixin, generate_wrapper_from_adapter)
+
+from tapioca.adapters import TapiocaInstantiator
 
 from tapioca.exceptions import ResponseProcessException, ClientError,\
      ServerError
@@ -18,6 +21,7 @@ class BraspagBaseClientAdapter(JSONAdapterMixin, TapiocaAdapter):
 
         if 'headers' in api_params:
             params['headers'] = api_params['headers']
+            params['headers']['ResponseId'] = self.generate_response_id()
 
         return params
 
@@ -38,6 +42,10 @@ class BraspagBaseClientAdapter(JSONAdapterMixin, TapiocaAdapter):
 
         return data
 
+    def generate_response_id(self):
+        hash = uuid.uuid4()
+        return str(hash)
+
 
 class BraspagClientAdapter(BraspagBaseClientAdapter):
     api_root = 'https://apihomolog.braspag.com.br/'
@@ -49,4 +57,20 @@ class BraspagConsultClientAdapter(BraspagBaseClientAdapter):
 
 BraspagConsult = generate_wrapper_from_adapter(BraspagConsultClientAdapter)
 Braspag = generate_wrapper_from_adapter(BraspagClientAdapter)
+
+class TapiocaBraspagInstantiator(TapiocaInstantiator):
+
+    def __call__(self, merchant_id=None, merchant_key=None, *args, **kwargs):
+        if not 'headers' in kwargs:
+            kwargs['headers'] = {
+                "Content-Type": "application/json",
+                "MerchantId": merchant_id,
+                "MerchantKey": merchant_key,
+                "ResponseId": None,
+            }
+
+        return super(TapiocaBraspagInstantiator, self).__call__(*args, **kwargs)
+
+BraspagConsult = TapiocaBraspagInstantiator(BraspagConsultClientAdapter)
+Braspag = TapiocaBraspagInstantiator(BraspagClientAdapter)
 
