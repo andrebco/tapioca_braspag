@@ -15,6 +15,18 @@ from resource_mapping import RESOURCE_MAPPING
 class BraspagBaseClientAdapter(JSONAdapterMixin, TapiocaAdapter):
     resource_mapping = RESOURCE_MAPPING
 
+    def get_api_root(self, api_params):
+        try:
+            if 'homolog' in api_params and api_params['homolog']:
+                return self.homolog_url
+            if 'sandbox' in api_params and api_params['sandbox']:
+                return self.sandbox_url
+
+        except AttributeError:
+            self.prod = True
+
+        return self.prod_url
+
     def get_request_kwargs(self, api_params, *args, **kwargs):
         params = super(BraspagBaseClientAdapter, self).get_request_kwargs(
             api_params, *args, **kwargs)
@@ -48,11 +60,17 @@ class BraspagBaseClientAdapter(JSONAdapterMixin, TapiocaAdapter):
 
 
 class BraspagClientAdapter(BraspagBaseClientAdapter):
-    api_root = 'https://apihomolog.braspag.com.br/'
+
+    prod_url = 'https://api.braspag.com.br/'
+    sandbox_url = 'https://apisandbox.braspag.com.br/'
+    homolog_url =  'https://apihomolog.braspag.com.br/'
 
 
 class BraspagConsultClientAdapter(BraspagBaseClientAdapter):
-    api_root = 'https://apiqueryhomolog.braspag.com.br/'
+
+    prod_url = 'https://apiquery.braspag.com.br/'
+    sandbox_url = 'https://apiquerysandbox.braspag.com.br/'
+    homolog_url =  'https://apiqueryhomolog.braspag.com.br/'
 
 
 BraspagConsult = generate_wrapper_from_adapter(BraspagConsultClientAdapter)

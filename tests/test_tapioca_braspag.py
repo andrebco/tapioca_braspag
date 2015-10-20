@@ -29,9 +29,10 @@ class TestTapiocaBraspag(unittest.TestCase):
 
     def setUp(self):
         self.wrapper = Braspag(merchant_id=self.merchant_id,
-                               merchant_key=self.merchant_key)
+                               merchant_key=self.merchant_key, homolog=True)
         self.wrapper_consult = BraspagConsult(merchant_id=self.merchant_id,
-                                              merchant_key=self.merchant_key)
+                                              merchant_key=self.merchant_key,
+                                              homolog=True)
 
     @patch.object(BraspagBaseClientAdapter, 'generate_response_id')
     @patch('tapioca.tapioca.requests')
