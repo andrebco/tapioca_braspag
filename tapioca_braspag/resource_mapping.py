@@ -22,7 +22,7 @@ RESOURCE_MAPPING = {
         #get
     },
     'recurrency_consult': {
-        'resource': 'RecurrentPayment/{id}',
+        'resource': 'v2/RecurrentPayment/{id}',
         'docs': 'http://apidocs.braspag.com.br/'
         #get
     },
